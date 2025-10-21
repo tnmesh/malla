@@ -40,7 +40,7 @@ from malla.config import get_config
 
 _cfg = get_config()
 
-CORS_ALLOWED_DOMAINS: list = _cfg.cors_allowed_domains
+CORS_ALLOWED_DOMAINS: str = _cfg.cors_allowed_domains.split(',')
 
 logger = logging.getLogger(__name__)
 api_bp = Blueprint("api", __name__, url_prefix="/api")

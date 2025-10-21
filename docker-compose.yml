@@ -21,6 +21,7 @@ services:
       - MALLA_NAME=${MALLA_NAME:-Malla}
       - MALLA_SECRET_KEY=${MALLA_SECRET_KEY:-dev-secret-key-change-in-production}
       - MALLA_DEBUG=${MALLA_DEBUG:-false}
+      - MALLA_CORS_ALLOWED_DOMAINS=${MALLA_CORS_ALLOWED_DOMAINS}
     networks:
       - web
     volumes:
@@ -47,6 +48,7 @@ services:
       - MALLA_MQTT_TOPIC_PREFIX=${MALLA_MQTT_TOPIC_PREFIX:-msh}
       - MALLA_MQTT_TOPIC_SUFFIX=${MALLA_MQTT_TOPIC_SUFFIX:-/+/+/+/#}
       - MALLA_DEFAULT_CHANNEL_KEY=${MALLA_DEFAULT_CHANNEL_KEY:-}
+      - MALLA_CORS_ALLOWED_DOMAINS=${MALLA_CORS_ALLOWED_DOMAINS}
     networks:
       - web
     volumes:

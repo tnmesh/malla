@@ -6,7 +6,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect
 
 from ..database.connection import get_db_connection
 
@@ -22,6 +22,32 @@ logger = logging.getLogger(__name__)
 
 packet_bp = Blueprint("packet", __name__)
 
+def get_packet_for_mesh_packet(mesh_packet_id: int) -> dict[str, Any] | None:
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get the main packet information
+        cursor.execute(
+            """
+            SELECT
+                id, timestamp, from_node_id, to_node_id, portnum, portnum_name,
+                gateway_id, channel_id, mesh_packet_id, rssi, snr, hop_limit, hop_start,
+                payload_length, processed_successfully, raw_payload,
+                via_mqtt, want_ack, priority, delayed, channel_index, rx_time,
+                pki_encrypted, next_hop, relay_node, tx_after
+            FROM packet_history
+            WHERE mesh_packet_id = ? ORDER BY timestamp DESC
+        """,
+            (mesh_packet_id,),
+        )
+
+        result = cursor.fetchone()
+
+        return dict(result) if result else None
+    except Exception as e:
+        logger.error(f"Error getting packet details for packet {mesh_packet_id}: {e}")
+        raise
 
 def get_packet_details(packet_id: int) -> dict[str, Any] | None:
     """Get comprehensive details for a specific packet including all receptions."""
@@ -1313,6 +1339,22 @@ def packet_detail(packet_id: int) -> str | tuple[str, int]:
 
         logger.info("Packet detail page rendered successfully")
         return render_template("packet_detail.html", **packet_details)
+    except Exception as e:
+        logger.error(f"Error in packet detail route: {e}")
+        return f"Packet detail error: {e}", 500
+
+@packet_bp.route("/mesh-packet/<int:mesh_packet_id>")
+def mesh_packet_detail(mesh_packet_id: int) -> str | tuple[str, int]:
+    """Packet detail page showing comprehensive information about a specific packet."""
+    logger.info(f"Packet detail route accessed for packet {mesh_packet_id}")
+    try:
+        packet_details = get_packet_for_mesh_packet(mesh_packet_id)
+
+        if packet_details is None:
+            return "Packet not found", 404
+
+        logger.info("Packet detail page redirected successfully")
+        return redirect(f'/packet/{packet_details['id']}')
     except Exception as e:
         logger.error(f"Error in packet detail route: {e}")
         return f"Packet detail error: {e}", 500

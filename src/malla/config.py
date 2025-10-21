@@ -43,7 +43,7 @@ class AppConfig:
     default_channel_key: str = "1PG7OiApB1nwvP+rz05pAQ=="
 
     # Allowed domains for CORS
-    cors_allowed_domains = [];
+    cors_allowed_domains: str = ""
 
     # Logging
     log_level: str = "INFO"
