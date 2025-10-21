@@ -5,7 +5,7 @@ services:
     # Use pre-built image by default, override with 'build: .' for development
     image: ${MALLA_IMAGE:-ghcr.io/zenitram/malla:latest}
     # Uncomment the following line for local development:
-    # build: .
+    build: .
 
     # Choose between Flask dev server and Gunicorn
     # Default: Flask development server (malla-web)
@@ -21,6 +21,8 @@ services:
       - MALLA_NAME=${MALLA_NAME:-Malla}
       - MALLA_SECRET_KEY=${MALLA_SECRET_KEY:-dev-secret-key-change-in-production}
       - MALLA_DEBUG=${MALLA_DEBUG:-false}
+    networks:
+      - web
     volumes:
       - malla_data:/app/data
       # Optional: mount your own config file (uncomment if you have one)
@@ -33,7 +35,7 @@ services:
     # Use pre-built image by default, override with 'build: .' for development
     image: ${MALLA_IMAGE:-ghcr.io/zenitram/malla:latest}
     # Uncomment the following line for local development:
-    # build: .
+    build: .
     command: ["/app/.venv/bin/malla-capture"]
     environment:
       - MALLA_DATABASE_FILE=/app/data/meshtastic_history.db
@@ -45,6 +47,8 @@ services:
       - MALLA_MQTT_TOPIC_PREFIX=${MALLA_MQTT_TOPIC_PREFIX:-msh}
       - MALLA_MQTT_TOPIC_SUFFIX=${MALLA_MQTT_TOPIC_SUFFIX:-/+/+/+/#}
       - MALLA_DEFAULT_CHANNEL_KEY=${MALLA_DEFAULT_CHANNEL_KEY:-}
+    networks:
+      - web
     volumes:
       - malla_data:/app/data
       # Optional: mount your own config file (uncomment if you have one)
@@ -53,3 +57,7 @@ services:
 
 volumes:
   malla_data:
+
+networks:
+  web:
+    external: true
