@@ -3,6 +3,7 @@
 Tests for multiple decryption keys functionality.
 """
 
+import base64
 import os
 import sys
 from unittest.mock import MagicMock, patch
