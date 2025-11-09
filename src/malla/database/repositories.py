@@ -209,12 +209,14 @@ class PacketRepository:
             # Generic exclusion filters for from/to node IDs
             if filters.get("exclude_from") is not None:
                 # Exclude packets whose sender matches the specified node ID
-                where_conditions.append("(from_node_id IS NULL OR from_node_id != ?)")
+                # Optimized: Use simple != condition to allow index usage
+                where_conditions.append("from_node_id != ?")
                 params.append(filters["exclude_from"])
 
             if filters.get("exclude_to") is not None:
                 # Exclude packets whose destination matches the specified node ID
-                where_conditions.append("(to_node_id IS NULL OR to_node_id != ?)")
+                # Optimized: Use simple != condition to allow index usage
+                where_conditions.append("to_node_id != ?")
                 params.append(filters["exclude_to"])
 
             # Search functionality
@@ -378,8 +380,8 @@ class PacketRepository:
                             p["processed_successfully"] for p in packets_in_group
                         ),
                         "timestamp_str": datetime.fromtimestamp(
-                            group_data["min_timestamp"]
-                        ).strftime("%Y-%m-%d %H:%M:%S"),
+                            group_data["min_timestamp"], UTC
+                        ).strftime("%Y-%m-%d %H:%M:%S UTC"),
                         "reception_count": len(packets_in_group),
                         "is_grouped": True,
                         "success": min(
@@ -508,8 +510,8 @@ class PacketRepository:
                     # Format timestamp if not already formatted
                     if packet["timestamp_str"] is None:
                         packet["timestamp_str"] = datetime.fromtimestamp(
-                            packet["timestamp"]
-                        ).strftime("%Y-%m-%d %H:%M:%S")
+                            packet["timestamp"], UTC
+                        ).strftime("%Y-%m-%d %H:%M:%S UTC")
 
                     # Calculate hop count if not already set
                     if (
@@ -536,7 +538,10 @@ class PacketRepository:
             if total_count is None:
                 # For exclude filters, provide a conservative estimate that ensures tests pass
                 # The complex count query optimization is causing issues, so use a simpler approach
-                if filters.get("exclude_from") is not None or filters.get("exclude_to") is not None:
+                if (
+                    filters.get("exclude_from") is not None
+                    or filters.get("exclude_to") is not None
+                ):
                     # Conservative estimate: assume some packets were excluded
                     if len(packets) == limit:
                         # If we got a full page, estimate there are more pages but fewer than without filter
@@ -547,13 +552,19 @@ class PacketRepository:
 
                     # Ensure total_count shows reduction when filters are applied
                     # This is primarily for UI feedback rather than exact pagination
-                    total_count = max(len(packets), total_count - 1)  # Ensure it's at least reduced by 1
+                    total_count = max(
+                        len(packets), total_count - 1
+                    )  # Ensure it's at least reduced by 1
                 else:
                     # Estimate total_count based on results for grouped queries without exclude filters
                     if len(packets) == limit:
-                        total_count = offset + limit + 1  # Estimate at least one more page
+                        total_count = (
+                            offset + limit + 1
+                        )  # Estimate at least one more page
                     else:
-                        total_count = offset + len(packets)  # Exact count for partial page
+                        total_count = offset + len(
+                            packets
+                        )  # Exact count for partial page
 
             return {
                 "packets": packets,
@@ -1179,7 +1190,9 @@ class NodeRepository:
                 else None,
                 "total_packets": node_row["total_packets"],
                 "last_seen": last_seen.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                "last_seen_timestamp": last_seen.timestamp(),  # Raw Unix timestamp for client-side formatting
                 "first_seen": first_seen.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                "first_seen_timestamp": first_seen.timestamp(),  # Raw Unix timestamp for client-side formatting
                 "last_seen_relative": format_time_ago(last_seen),
                 "unique_destinations": node_row["unique_destinations"],
                 "unique_gateways": node_row["unique_gateways"],
@@ -1705,6 +1718,9 @@ class NodeRepository:
                         "timestamp": location_timestamp.strftime(
                             "%Y-%m-%d %H:%M:%S UTC"
                         ),
+                        "timestamp_unix": latest_location[
+                            "timestamp"
+                        ],  # Raw Unix timestamp for client-side formatting
                         "timestamp_relative": format_time_ago(location_timestamp),
                     }
             except Exception as e:
@@ -2826,8 +2842,8 @@ class TracerouteRepository:
                     # Format timestamp if not already formatted
                     if packet["timestamp_str"] is None:
                         packet["timestamp_str"] = datetime.fromtimestamp(
-                            packet["timestamp"]
-                        ).strftime("%Y-%m-%d %H:%M:%S")
+                            packet["timestamp"], UTC
+                        ).strftime("%Y-%m-%d %H:%M:%S UTC")
 
                     # Add success indicator
                     packet["success"] = packet["processed_successfully"]

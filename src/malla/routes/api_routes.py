@@ -1169,7 +1169,7 @@ def api_packets_data():
     try:
         # Get parameters
         page = request.args.get("page", type=int, default=1)
-        limit = request.args.get("limit", type=int, default=25)
+        limit = request.args.get("limit", type=int, default=100)
         search = request.args.get("search", default="")
         sort_by = request.args.get("sort_by", default="timestamp")
         sort_order = request.args.get("sort_order", default="desc")
@@ -1381,16 +1381,6 @@ def api_packets_data():
                         1 if gateway_id and gateway_id != "Unknown" else 0
                     )
 
-            # Handle size display and sorting
-            size_display = packet.get("payload_length", 0)
-            size_sort_value = size_display
-
-            if group_packets and packet.get("avg_payload_length"):
-                size_display = f"{packet['avg_payload_length']:.1f} B avg"
-                size_sort_value = packet["avg_payload_length"]
-            elif size_display:
-                size_display = f"{size_display} B"
-
             # Handle RSSI/SNR/Hops for grouped packets
             rssi_display = packet.get("rssi")
             snr_display = packet.get("snr")
@@ -1407,7 +1397,12 @@ def api_packets_data():
             # Prepare response data
             response_data = {
                 "id": packet["id"],
-                "timestamp": packet["timestamp_str"],
+                "timestamp": packet[
+                    "timestamp"
+                ],  # Send raw Unix timestamp for client-side formatting
+                "timestamp_str": packet[
+                    "timestamp_str"
+                ],  # Keep formatted string as fallback
                 "from_node": from_node_name,
                 "from_node_id": packet.get("from_node_id"),
                 "from_node_short": from_node_short,
@@ -1420,8 +1415,6 @@ def api_packets_data():
                 "rssi": rssi_display,
                 "snr": snr_display,
                 "hops": hops_display,
-                "size": size_display,
-                "size_sort_value": size_sort_value,
                 "mesh_packet_id": packet.get("mesh_packet_id"),
                 "is_grouped": group_packets,
                 "channel": packet.get("channel_id") or "Unknown",
@@ -1466,7 +1459,7 @@ def api_nodes_data():
     try:
         # Get parameters
         page = request.args.get("page", type=int, default=1)
-        limit = request.args.get("limit", type=int, default=25)
+        limit = request.args.get("limit", type=int, default=100)
         search = request.args.get("search", default="")
         sort_by = request.args.get("sort_by", default="last_packet_time")
         sort_order = request.args.get("sort_order", default="desc")
@@ -1550,7 +1543,7 @@ def api_traceroute_data():
     try:
         # Get parameters
         page = request.args.get("page", type=int, default=1)
-        limit = request.args.get("limit", type=int, default=25)
+        limit = request.args.get("limit", type=int, default=100)
         search = request.args.get("search", default="")
         sort_by = request.args.get("sort_by", default="timestamp")
         sort_order = request.args.get("sort_order", default="desc")
@@ -1789,7 +1782,12 @@ def api_traceroute_data():
             # Prepare response data
             response_data = {
                 "id": tr["id"],
-                "timestamp": tr.get("timestamp_str", ""),
+                "timestamp": tr.get(
+                    "timestamp"
+                ),  # Send raw Unix timestamp for client-side formatting
+                "timestamp_str": tr.get(
+                    "timestamp_str", ""
+                ),  # Keep formatted string as fallback
                 "from_node": from_node_name,
                 "from_node_id": tr.get("from_node_id"),
                 "from_node_short": from_node_short,

@@ -81,9 +81,9 @@ def get_packet_details(packet_id: int) -> dict[str, Any] | None:
         packet = dict(packet_row)
 
         # Add derived fields
-        packet["timestamp_str"] = datetime.fromtimestamp(packet["timestamp"]).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        packet["timestamp_str"] = datetime.fromtimestamp(
+            packet["timestamp"], UTC
+        ).strftime("%Y-%m-%d %H:%M:%S UTC")
         packet["hop_count"] = (
             (packet["hop_start"] - packet["hop_limit"])
             if packet["hop_start"] is not None and packet["hop_limit"] is not None
@@ -166,8 +166,8 @@ def get_packet_details(packet_id: int) -> dict[str, Any] | None:
         for row in cursor.fetchall():
             reception = dict(row)
             reception["timestamp_str"] = datetime.fromtimestamp(
-                reception["timestamp"]
-            ).strftime("%Y-%m-%d %H:%M:%S")
+                reception["timestamp"], UTC
+            ).strftime("%Y-%m-%d %H:%M:%S UTC")
             reception["hop_count"] = (
                 (reception["hop_start"] - reception["hop_limit"])
                 if reception["hop_start"] is not None
@@ -207,8 +207,8 @@ def get_packet_details(packet_id: int) -> dict[str, Any] | None:
         for row in cursor.fetchall():
             ctx_packet = dict(row)
             ctx_packet["timestamp_str"] = datetime.fromtimestamp(
-                ctx_packet["timestamp"]
-            ).strftime("%Y-%m-%d %H:%M:%S")
+                ctx_packet["timestamp"], UTC
+            ).strftime("%Y-%m-%d %H:%M:%S UTC")
             ctx_packet["hop_count"] = (
                 (ctx_packet["hop_start"] - ctx_packet["hop_limit"])
                 if ctx_packet["hop_start"] is not None
