@@ -62,6 +62,14 @@
                     </label>
                 </div>
             </div>
+            <div class="col-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="gateway_only" name="gateway_only" value="1">
+                    <label class="form-check-label" for="gateway_only">
+                        <i class="bi bi-router-fill"></i> Gateway nodes only
+                    </label>
+                </div>
+            </div>
         </div>
     {% endcall %}
 
@@ -420,6 +428,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- Active only ---------------------------------------------------
             if (filters.active_only === true || filters.active_only === '1') {
                 filtered = filtered.filter((n) => (n.packet_count_24h || 0) > 0);
+            }
+            // --- Gateway only ---------------------------------------------------
+            if (filters.gateway_only === true || filters.gateway_only === '1') {
+                filtered = filtered.filter((n) => (n.gateway_packet_count_24h || 0) > 0);
             }
             // --- Named only ----------------------------------------------------
             if (filters.named_only === true || filters.named_only === '1') {

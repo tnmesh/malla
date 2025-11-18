@@ -1552,6 +1552,7 @@ def api_nodes_data():
                     "last_packet_str": node.get("last_packet_str", "Never"),
                     "last_packet_time": node.get("last_packet_time"),
                     "packet_count_24h": node.get("packet_count_24h", 0),
+                    "gateway_packet_count_24h": node.get("gateway_packet_count_24h", 0),
                     "status": status,
                 }
             )
