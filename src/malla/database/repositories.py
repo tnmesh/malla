@@ -1017,6 +1017,15 @@ class NodeRepository:
                         else ""
                     )
 
+                # Add gateway_only filter if needed
+                if filters.get("gateway_only"):
+                    where_conditions.append("gstats.gateway_packet_count_24h > 0")
+                    where_clause = (
+                        "WHERE " + " AND ".join(where_conditions)
+                        if where_conditions
+                        else ""
+                    )
+
                 query = f"""
                     SELECT
                         ni.node_id,
