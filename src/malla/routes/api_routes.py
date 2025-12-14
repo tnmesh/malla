@@ -682,6 +682,89 @@ def api_traceroute_patterns():
         logger.error(f"Error in API traceroute patterns: {e}")
         return jsonify({"error": str(e)}), 500
 
+@api_bp.route("/infrastructure-nodes/by-region")
+def api_infrastructure_nodes():
+    try:
+        # Build filters from query parameters
+        filters: dict[str, Any] = {}
+        hw_model = request.args.get("hw_model", "").strip()
+        if hw_model:
+            filters["hw_model"] = hw_model
+        role = request.args.get("role", "").strip()
+        if role:
+            filters["role"] = role
+
+        primary_channel = request.args.get("primary_channel", "").strip()
+        if primary_channel:
+            filters["primary_channel"] = primary_channel
+
+        # Only show infrastructure nodes
+        filters["infrastructure_only"] = True;
+
+        # Get node data using repository
+        result = NodeRepository.get_nodes(
+            limit=100000,
+            offset=0,
+            search=None,
+            filters=filters,
+        )
+
+        # Format data for modern table
+        data = {}
+
+        for node in result["nodes"]:
+            # Determine status
+            status = "Unknown"
+            if node.get("packet_count_24h", 0) > 0:
+                status = "Active"
+            elif node.get("last_packet_time"):
+                # Check if last packet was within 7 days
+                time_diff = time.time() - node["last_packet_time"]
+                if time_diff < (7 * 24 * 3600):
+                    status = "Inactive"
+
+            region = node.get("region")
+            if region is None:
+                continue
+
+            if region not in data:
+                data[region] = [];
+
+            data[region].append(
+                {
+                    "node_id": node["node_id"],
+                    "hex_id": f"!{node['node_id']:08x}",
+                    "node_name": node.get("long_name")
+                    or node.get("short_name")
+                    or "Unnamed",
+                    "long_name": node.get("long_name"),
+                    "short_name": node.get("short_name"),
+                    "hw_model": node.get("hw_model", "Unknown"),
+                    "role": node.get("role", "Unknown"),
+                    "primary_channel": node.get("primary_channel"),
+                    "last_packet_str": node.get("last_packet_str", "Never"),
+                    "last_packet_time": node.get("last_packet_time"),
+                    "is_infrastructure_node": node.get("is_infrastructure_node", 0),
+                    "region": node.get("region", "Unknown"),
+                    "packet_count_24h": node.get("packet_count_24h", 0),
+                    "gateway_packet_count_24h": node.get("gateway_packet_count_24h", 0),
+                    "direct_count_24h": node.get("direct_count_24h", 0),
+                    "status": status,
+                }
+            )
+
+        total_count = 0
+        for region in data:
+            total_count += len(data[region])
+
+        response = {
+            "data": data,
+        }
+
+        return jsonify(response)
+    except Exception as e:
+        logger.error(f"Error in API nodes modern: {e}")
+        return jsonify({"error": str(e), "data": []}), 500
 
 @api_bp.route("/node/<node_id>/info")
 def api_node_info(node_id):
@@ -705,7 +788,9 @@ def api_node_info(node_id):
                 "primary_channel": None,
                 "last_updated": None,
                 "is_licensed": False,
+                "is_infrastructure_node": False,
                 "mac_address": None,
+                "region": None,
                 "first_seen": None,
                 "last_seen": None,
                 "packet_count_24h": 0,
@@ -1551,6 +1636,7 @@ def api_nodes_data():
                     "primary_channel": node.get("primary_channel"),
                     "last_packet_str": node.get("last_packet_str", "Never"),
                     "last_packet_time": node.get("last_packet_time"),
+                    "is_infrastructure_node": node.get("is_infrastructure_node"),
                     "packet_count_24h": node.get("packet_count_24h", 0),
                     "gateway_packet_count_24h": node.get("gateway_packet_count_24h", 0),
                     "direct_count_24h": node.get("direct_count_24h", 0),

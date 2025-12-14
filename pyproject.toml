@@ -44,6 +44,8 @@ dependencies = [
     "types-flask-cors>=6.0.0.20250520",
     "markdown>=3.6.0",
     "flask-cors>6.0",
+    "geopandas>=1.0.1",
+    "shapely==2.0.7"
 ]
 
 [project.urls]
@@ -62,7 +64,7 @@ dev = [
     "pytest>=8.3.0",
     "coverage>=7.6.0",
     "line-profiler>=4.2.0",
-    "py-spy>=0.4.0",
+    "py-spy>=0.4.0"
 ]
 
 # Hatch configuration
