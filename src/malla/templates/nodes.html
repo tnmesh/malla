@@ -70,6 +70,14 @@
                     </label>
                 </div>
             </div>
+            <div class="col-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="infrastructure_only" name="infrastructure_only" value="1">
+                    <label class="form-check-label" for="infrastructure_only">
+                        <i class="bi bi-broadcast"></i> Infrastructure nodes only
+                    </label>
+                </div>
+            </div>
         </div>
     {% endcall %}
 
@@ -417,6 +425,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Start with full dataset
             let filtered = [...allNodeData];
+            filtered.forEach((n) => {
+                console.log(n)
+            })
             const filters = this.state.filters || {};
 
             // --- Search filter -------------------------------------------------
@@ -448,6 +459,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- Gateway only ---------------------------------------------------
             if (filters.gateway_only === true || filters.gateway_only === '1') {
                 filtered = filtered.filter((n) => (n.gateway_packet_count_24h || 0) > 0);
+            }
+            // --- Infrastructure only ---------------------------------------------------
+            if (filters.infrastructure_only === true || filters.infrastructure_only === '1') {
+                filtered = filtered.filter((n) => (n.is_infrastructure_node || 0));
             }
             // --- Named only ----------------------------------------------------
             if (filters.named_only === true || filters.named_only === '1') {

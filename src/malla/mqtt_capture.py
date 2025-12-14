@@ -50,7 +50,9 @@ from meshtastic import (
     telemetry_pb2,
 )
 from paho.mqtt.enums import CallbackAPIVersion
-
+from .utils.geo_utils import (
+    get_tennessee_division,
+)
 # ---------------------------------------------------------------------------
 # Configuration (centralised via malla.config)
 # ---------------------------------------------------------------------------
@@ -351,6 +353,8 @@ def init_database() -> None:
             role TEXT,
             primary_channel TEXT,
             is_licensed BOOLEAN,
+            is_infrastructure_node BOOLEAN,
+            region TEXT,
             mac_address TEXT,
             first_seen REAL NOT NULL,
             last_updated REAL NOT NULL
@@ -369,15 +373,25 @@ def init_database() -> None:
     )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_node_hex_id ON node_info(hex_id)")
 
-    # Ensure primary_channel column exists for legacy databases
-    try:
-        cursor.execute("ALTER TABLE node_info ADD COLUMN primary_channel TEXT")
-        logging.info("Added primary_channel column to node_info table")
-    except sqlite3.OperationalError as e:
-        if "duplicate column name" in str(e).lower():
-            logging.debug("primary_channel column already exists")
-        else:
-            logging.warning(f"Could not add primary_channel column: {e}")
+    # New columns for node_info table
+    new_columns = [
+        ("primary_channel", "TEXT"),
+        ("is_infrastructure_node", "BOOLEAN"),
+        ("region", "TEXT"),
+    ]
+
+    # Ensure additional columns exist
+    for column_name, column_type in new_columns:
+        try:
+            cursor.execute(
+                f"ALTER TABLE node_info ADD COLUMN {column_name} {column_type}"
+            )
+            logging.info(f"Added {column_name} column to node_info table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e).lower():
+                logging.debug(f"{column_name} column already exists")
+            else:
+                logging.warning(f"Could not add {column_name} column: {e}")
 
     # Index for faster channel filtering
     cursor.execute(
@@ -420,7 +434,8 @@ def load_node_cache() -> None:
 
         cursor.execute("""
             SELECT node_id, hex_id, long_name, short_name, hw_model, role,
-                   is_licensed, mac_address, primary_channel, last_updated
+                   is_licensed, is_infrastructure_node, mac_address, primary_channel, 
+                   region, last_updated
             FROM node_info
         """)
 
@@ -436,8 +451,10 @@ def load_node_cache() -> None:
                 hw_model,
                 role,
                 is_licensed,
+                is_infrastructure_node,
                 mac_address,
                 primary_channel,
+                region,
                 last_updated,
             ) = row
             node_cache[node_id] = {
@@ -447,8 +464,10 @@ def load_node_cache() -> None:
                 "hw_model": hw_model,
                 "role": role,
                 "is_licensed": bool(is_licensed),
+                "is_infrastructure_node": bool(is_infrastructure_node),
                 "mac_address": mac_address,
                 "primary_channel": primary_channel,
+                "region": region,
                 "last_updated": last_updated,
             }
 
@@ -466,6 +485,8 @@ def update_node_cache(
     is_licensed: bool | None = None,
     mac_address: str | None = None,
     primary_channel: str | None = None,
+    is_infrastructure_node: bool | None = None,
+    region: str | None = None,
 ) -> None:
     """Update both in-memory cache and database with node information."""
     global node_cache
@@ -486,6 +507,8 @@ def update_node_cache(
             "mac_address": mac_address,
             "primary_channel": primary_channel,
             "last_updated": current_time,
+            "is_infrastructure_node": is_infrastructure_node,
+            "region": region,
         }
     else:
         # Update existing entry with new non-None values
@@ -505,6 +528,10 @@ def update_node_cache(
             node_cache[node_id]["mac_address"] = mac_address
         if primary_channel is not None:
             node_cache[node_id]["primary_channel"] = primary_channel
+        if is_infrastructure_node is not None:
+            node_cache[node_id]["is_infrastructure_node"] = is_infrastructure_node
+        if region is not None:
+            node_cache[node_id]["region"] = region
         node_cache[node_id]["last_updated"] = current_time
 
     # Update database using INSERT OR REPLACE to handle existing nodes
@@ -514,8 +541,12 @@ def update_node_cache(
         cursor = conn.cursor()
 
         # Get existing values from database if node exists
-        cursor.execute(
-            "SELECT hex_id, long_name, short_name, hw_model, role, is_licensed, mac_address, primary_channel, first_seen FROM node_info WHERE node_id = ?",
+        cursor.execute("""
+            SELECT hex_id, long_name, short_name, hw_model, role, is_licensed, 
+                is_infrastructure_node, mac_address, primary_channel, region, 
+                first_seen FROM node_info
+            WHERE node_id = ?
+            """,
             (node_id,),
         )
         existing = cursor.fetchone()
@@ -529,8 +560,10 @@ def update_node_cache(
                 existing_hw_model,
                 existing_role,
                 existing_is_licensed,
+                existing_is_infrastructure_node,
                 existing_mac_address,
                 existing_primary_channel,
+                existing_region,
                 _first_seen,
             ) = existing
             final_hex_id = hex_id if hex_id is not None else existing_hex_id
@@ -543,6 +576,9 @@ def update_node_cache(
             final_is_licensed = (
                 is_licensed if is_licensed is not None else existing_is_licensed
             )
+            final_is_infrastructure_node = (
+                is_infrastructure_node if is_infrastructure_node is not None else existing_is_infrastructure_node
+            )
             final_mac_address = (
                 mac_address if mac_address is not None else existing_mac_address
             )
@@ -551,12 +587,18 @@ def update_node_cache(
                 if primary_channel is not None
                 else existing_primary_channel
             )
+            final_region = (
+                region
+                if region is not None
+                else existing_region
+            )
 
             cursor.execute(
                 """
                 UPDATE node_info
                 SET hex_id = ?, long_name = ?, short_name = ?, hw_model = ?, role = ?,
-                    is_licensed = ?, mac_address = ?, primary_channel = ?, last_updated = ?
+                    is_licensed = ?, is_infrastructure_node = ?, mac_address = ?, primary_channel = ?,
+                    region = ?, last_updated = ?
                 WHERE node_id = ?
             """,
                 (
@@ -566,8 +608,10 @@ def update_node_cache(
                     final_hw_model,
                     final_role,
                     final_is_licensed,
+                    final_is_infrastructure_node,
                     final_mac_address,
                     final_primary_channel,
+                    final_region,
                     current_time,
                     node_id,
                 ),
@@ -582,8 +626,8 @@ def update_node_cache(
                 """
                 INSERT INTO node_info
                 (node_id, hex_id, long_name, short_name, hw_model, role,
-                 is_licensed, mac_address, primary_channel, first_seen, last_updated)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 is_licensed, is_infrastructure_node, mac_address, primary_channel, region, first_seen, last_updated)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     node_id,
@@ -593,8 +637,10 @@ def update_node_cache(
                     hw_model,
                     role,
                     is_licensed,
+                    is_infrastructure_node,
                     mac_address,
                     primary_channel,
+                    region,
                     current_time,
                     current_time,
                 ),
@@ -1115,12 +1161,20 @@ def on_message(client: mqtt.Client, userdata: Any, msg: mqtt.MQTTMessage) -> Non
             lon = position_data.longitude_i / 1e7
             alt = position_data.altitude
 
+            region = get_tennessee_division(lat, lon)
+
+            # Update the region associated to the node
+            update_node_cache(
+                node_id=from_node_id_numeric,
+                region=region
+            )
+
             from_node_display = get_node_display_name(from_node_id_numeric)
             via_mqtt_str = (
                 " (via MQTT)" if getattr(mesh_packet, "via_mqtt", False) else ""
             )
             logging.info(
-                f"📍 Position from {from_node_display}{via_mqtt_str}: {lat:.5f}, {lon:.5f} (alt: {alt}m)"
+                f"📍 Position from {from_node_display}{via_mqtt_str}: {lat:.5f}, {lon:.5f} (alt: {alt}m) (region: {region})"
             )
             processed_successfully = True
 

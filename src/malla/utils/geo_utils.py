@@ -3,7 +3,29 @@ Geographic utility functions for Meshtastic Mesh Health Web UI
 """
 
 import math
+import geopandas
+from shapely.geometry import Point
 
+def get_tennessee_division(latitude: float, longitude: float) -> str:
+    """
+    Determine the Tennessee division for given latitude and longitude.
+
+    Args:
+        latitude: Latitude in decimal degrees
+        longitude: Longitude in decimal degrees
+
+    Returns:
+        Division name as a string
+    """
+    divisions_gdf = geopandas.read_file("src/malla/utils/geo/divisions.geojson")
+
+    point = Point(longitude, latitude)
+
+    for _, row in divisions_gdf.iterrows():
+        if row['geometry'].contains(point):
+            return row['Division']
+
+    return "Unknown"
 
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """

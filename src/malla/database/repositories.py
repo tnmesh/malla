@@ -1026,6 +1026,15 @@ class NodeRepository:
                         else ""
                     )
 
+                # Add infrastructure_only filter if needed
+                if filters.get("infrastructure_only"):
+                    where_conditions.append("ni.is_infrastructure_node = 1")
+                    where_clause = (
+                        "WHERE " + " AND ".join(where_conditions)
+                        if where_conditions
+                        else ""
+                    )
+
                 query = f"""
                     SELECT
                         ni.node_id,
@@ -1034,6 +1043,8 @@ class NodeRepository:
                         ni.hw_model,
                         ni.role,
                         ni.primary_channel,
+                        ni.is_infrastructure_node,
+                        ni.region,
                         ni.last_updated,
                         printf('!%08x', ni.node_id) as hex_id,
                         COALESCE(stats.packet_count_24h, 0) as packet_count_24h,
@@ -1165,6 +1176,7 @@ class NodeRepository:
                 n.hw_model,
                 n.role,
                 n.primary_channel,
+                n.is_infrastructure_node,
                 COUNT(*) as total_packets,
                 MAX(p.timestamp) as last_seen,
                 MIN(p.timestamp) as first_seen,
@@ -1205,6 +1217,7 @@ class NodeRepository:
                     "hw_model": node_info_row["hw_model"],
                     "role": node_info_row["role"],
                     "primary_channel": node_info_row.get("primary_channel"),
+                    "is_infrastructure_node": node_info_row.get("is_infrastructure_node"),
                     "total_packets": 0,
                     "last_seen": None,
                     "first_seen": None,
@@ -1252,6 +1265,7 @@ class NodeRepository:
                 "last_seen_relative": format_time_ago(last_seen),
                 "unique_destinations": node_row["unique_destinations"],
                 "unique_gateways": node_row["unique_gateways"],
+                "is_infrastructure_node": node_row["is_infrastructure_node"],
                 "avg_rssi": round(node_row["avg_rssi"], 1)
                 if node_row["avg_rssi"]
                 else None,
@@ -1771,6 +1785,7 @@ class NodeRepository:
                         "latitude": latest_location["latitude"],
                         "longitude": latest_location["longitude"],
                         "altitude": latest_location.get("altitude"),
+                        "region": latest_location.get("region"),
                         "timestamp": location_timestamp.strftime(
                             "%Y-%m-%d %H:%M:%S UTC"
                         ),
@@ -2105,6 +2120,8 @@ class NodeRepository:
                     printf('!%08x', ni.node_id) as hex_id,
                     ni.role,
                     ni.primary_channel,
+                    ni.region,
+                    ni.is_infrastructure_node,
                     datetime(COALESCE(stats.last_packet, ni.last_updated), 'unixepoch') as last_packet_str,
                     COALESCE(stats.packet_count_24h, 0) as packet_count_24h,
                     COALESCE(stats.gateway_count, 0) as gateway_count_24h
@@ -3560,12 +3577,13 @@ class LocationRepository:
             # Fetch the most recent POSITION_APP packet for this node
             cursor.execute(
                 """
-                SELECT timestamp, raw_payload
-                FROM packet_history
-                WHERE from_node_id = ?
-                  AND portnum = 3            -- POSITION_APP
-                  AND raw_payload IS NOT NULL
-                ORDER BY timestamp DESC
+                SELECT ni.region, p.timestamp, p.raw_payload
+                    FROM packet_history p
+                INNER JOIN node_info ni ON ni.node_id = p.from_node_id
+                WHERE p.from_node_id = ?
+                  AND p.portnum = 3            -- POSITION_APP
+                  AND p.raw_payload IS NOT NULL
+                ORDER BY p.timestamp DESC
                 LIMIT 1
                 """,
                 (node_id,),
@@ -3593,6 +3611,7 @@ class LocationRepository:
                     "latitude": latitude,
                     "longitude": longitude,
                     "altitude": altitude,
+                    "region": row["region"],
                     "timestamp": row["timestamp"],
                 }
                 conn.close()
