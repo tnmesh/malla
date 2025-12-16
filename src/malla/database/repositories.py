@@ -3289,6 +3289,7 @@ class LocationRepository:
                     ni.hw_model,
                     ni.role,
                     ni.primary_channel,
+                    ni.is_infrastructure_node,
                     printf('!%08x', ph.from_node_id) as hex_id
                 FROM packet_history ph
                 INNER JOIN max_timestamps mt ON ph.from_node_id = mt.from_node_id
@@ -3430,6 +3431,7 @@ class LocationRepository:
                             "longitude": longitude,
                             "altitude": altitude,
                             "timestamp": row["timestamp"],
+                            "is_infrastructure_node": row["is_infrastructure_node"],
                             "precision_bits": precision_bits,
                             "precision_meters": precision_meters,
                             "sats_in_view": sats_in_view,
