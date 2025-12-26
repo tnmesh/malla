@@ -25,7 +25,7 @@
 
     <!-- Network Overview Cards - Redesigned for Heterogeneous Networks -->
     <div class="row mb-4">
-        <div class="col-md-2">
+        <div class="col-md-2" style="padding-bottom: 10px">
             <div class="card h-100">
                 <div class="card-body card-metric">
                     <div class="metric-value">{{ stats.total_nodes }}</div>
@@ -34,7 +34,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="padding-bottom: 10px">
             <div class="card h-100">
                 <div class="card-body card-metric">
                     <div class="metric-value text-success">{{ stats.active_nodes_24h }}</div>
@@ -45,7 +45,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="padding-bottom: 10px">
             <div class="card h-100">
                 <div class="card-body card-metric">
                     <div class="metric-value text-warning">{{ gateway_count }}</div>
@@ -54,7 +54,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="padding-bottom: 10px">
             <div class="card h-100">
                 <div class="card-body card-metric">
                     <div class="metric-value text-info">{{ stats.packet_types|length }}</div>
@@ -63,7 +63,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="padding-bottom: 10px">
             <div class="card h-100">
                 <div class="card-body card-metric">
                     <div class="metric-value">{{ "{:,}".format(stats.total_packets) }}</div>
@@ -72,7 +72,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="padding-bottom: 10px">
             <div class="card h-100">
                 <div class="card-body card-metric">
                     {% set success_class = 'text-success' if stats.success_rate >= 95 else 'text-warning' if stats.success_rate >= 85 else 'text-danger' %}
@@ -297,7 +297,7 @@
 
     <!-- Network Information Cards -->
     <div class="row mb-4">
-        <div class="col-md-4">
+        <div class="col-md-4" style="padding-bottom: 10px">
             <div class="card">
                 <div class="card-header">
                     <h6 class="card-title mb-0"><i class="bi bi-info-circle"></i> Network Information</h6>
@@ -328,7 +328,7 @@
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-4" style="padding-bottom: 10px">
             <div class="card">
                 <div class="card-header">
                     <h6 class="card-title mb-0"><i class="bi bi-activity"></i> Activity Summary</h6>
@@ -356,7 +356,7 @@
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-4" style="padding-bottom: 10px">
             <div class="card">
                 <div class="card-header">
                     <h6 class="card-title mb-0"><i class="bi bi-reception-4"></i> Signal Quality</h6>

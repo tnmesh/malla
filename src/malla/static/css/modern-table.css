@@ -2,7 +2,7 @@
 
 .modern-table-container {
     background: var(--bs-body-bg);
-    border-radius: 0.5rem;
+    border-radius: 0rem;
     box-shadow: var(--bs-box-shadow-sm);
     overflow: hidden;
 }

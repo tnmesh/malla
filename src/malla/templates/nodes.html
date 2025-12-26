@@ -350,22 +350,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     return `<span class="badge bg-light text-dark">0</span>`;
                 }
             },
-            {
-                key: 'direct_count_24h',
-                title: '24h Direct Connections',
-                sortable: true,
-                render: (value, row) => {
-                    const count = parseInt(value) || 0;
-                    if (count > 0) {
-                        let badgeClass = 'bg-success';
-                        if (count < 10) badgeClass = 'bg-warning';
-                        else if (count < 50) badgeClass = 'bg-info';
+            // {
+            //     key: 'direct_count_24h',
+            //     title: '24h Direct Connections',
+            //     sortable: true,
+            //     render: (value, row) => {
+            //         const count = parseInt(value) || 0;
+            //         if (count > 0) {
+            //             let badgeClass = 'bg-success';
+            //             if (count < 10) badgeClass = 'bg-warning';
+            //             else if (count < 50) badgeClass = 'bg-info';
 
-                        return `<span class="badge ${badgeClass}">${count}</span>`;
-                    }
-                    return `<span class="badge bg-light text-dark">N/A</span>`;
-                }
-            },
+            //             return `<span class="badge ${badgeClass}">${count}</span>`;
+            //         }
+            //         return `<span class="badge bg-light text-dark">N/A</span>`;
+            //     }
+            // },
             {
                 key: 'primary_channel',
                 title: 'Channel',
