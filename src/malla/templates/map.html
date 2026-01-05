@@ -108,6 +108,12 @@
                     </select>
                 </div>
                 <div class="mb-3">
+                    <input class="form-check-input" type="checkbox" id="regionNodesOnly" name="regionNodesOnly" value="1" checked>
+                    <label class="form-check-label" for="regionNodesOnly">
+                        <i class="bi bi-map"></i> Show region nodes only
+                    </label>
+                </div>
+                <div class="mb-3">
                     <label for="startDateTime" class="form-label">Start Date & Time</label>
                     <input type="datetime-local" class="form-control form-control-sm" id="startDateTime" name="startDateTime">
                 </div>
@@ -774,6 +780,7 @@ function applyClientSideFilters() {
     const endDateTime = formData.get('endDateTime');
     const minContacts = formData.get('minContacts');
     const infrastructureOnly = formData.get('infrastructureOnly');
+    const regionNodesOnly = formData.get('regionNodesOnly');
 
     // Start with all data
     let filteredNodes = [...allNodeData];
@@ -814,6 +821,11 @@ function applyClientSideFilters() {
     // Show only infrastructure nodes
     if (infrastructureOnly) {
         filteredNodes = filteredNodes.filter(node => node.is_infrastructure_node);
+    }
+
+    // Show only region nodes
+    if (regionNodesOnly) {
+        filteredNodes = filteredNodes.filter(node => node.region !== null);
     }
 
     // Filter links by minimum number of direct contacts (total_hops_seen)
