@@ -269,6 +269,7 @@ class LocationService:
                 "altitude": location["altitude"],
                 "timestamp": location["timestamp"],
                 "is_infrastructure_node": location["is_infrastructure_node"],
+                "region": location["region"],
                 # Enhanced fields for map display
                 "age_hours": round(age_hours, 2),
                 "timestamp_str": timestamp_str,
