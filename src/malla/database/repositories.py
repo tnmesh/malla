@@ -1177,6 +1177,7 @@ class NodeRepository:
                 n.role,
                 n.primary_channel,
                 n.is_infrastructure_node,
+                n.region,
                 COUNT(*) as total_packets,
                 MAX(p.timestamp) as last_seen,
                 MIN(p.timestamp) as first_seen,
@@ -1227,6 +1228,7 @@ class NodeRepository:
                     "avg_rssi": None,
                     "avg_snr": None,
                     "avg_hops": None,
+                    "region": "Unknown",
                 }
                 conn.close()
                 return {
@@ -1275,6 +1277,9 @@ class NodeRepository:
                 "avg_hops": round(node_row["avg_hops"], 1)
                 if node_row["avg_hops"]
                 else None,
+                "region": node_row["region"]
+                if node_row["region"]
+                else "Unknown",
             }
 
             # Get recent packets from this node

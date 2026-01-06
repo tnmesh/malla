@@ -828,7 +828,7 @@ function applyClientSideFilters() {
 
     // Show only region nodes
     if (regionNodesOnly) {
-        filteredNodes = filteredNodes.filter(node => node.region !== null);
+        filteredNodes = filteredNodes.filter(node => node.region !== "Unknown");
     }
 
     // Filter links by minimum number of direct contacts (total_hops_seen)
