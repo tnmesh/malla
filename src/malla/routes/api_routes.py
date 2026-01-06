@@ -726,7 +726,7 @@ def api_infrastructure_nodes():
 
             region = node.get("region")
             if region is None:
-                continue
+                region = "Unknown"
 
             if region not in data:
                 data[region] = [];
