@@ -43,8 +43,24 @@ class DashboardRepository:
                 gateway_params = [gateway_id]
 
             # Get basic node count (this is fast and separate)
-            cursor.execute("SELECT COUNT(*) as total_nodes FROM node_info")
+            cursor.execute(f"""
+                SELECT 
+                    COUNT(*) as total_nodes FROM node_info
+                WHERE last_updated < ?
+            """,
+                [twenty_four_hours_ago]
+            )
             total_nodes = cursor.fetchone()["total_nodes"]
+
+            # Get infrastructure node count
+            cursor.execute(f"""
+                SELECT 
+                    COUNT(*) as total_nodes FROM node_info
+                WHERE is_infrastructure_node = 1
+            """
+            )
+            total_infrastructure_nodes = cursor.fetchone()["total_nodes"]
+
 
             # Single optimized query for all packet statistics
             params = [one_hour_ago, twenty_four_hours_ago] + gateway_params
@@ -94,6 +110,7 @@ class DashboardRepository:
 
             return {
                 "total_nodes": total_nodes,
+                "total_infrastructure_nodes": total_infrastructure_nodes,
                 "active_nodes_24h": stats_row["active_nodes_24h"] or 0,
                 "total_packets": total_packets_all_time or 0,
                 "recent_packets": stats_row["recent_packets"] or 0,
