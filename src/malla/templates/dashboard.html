@@ -108,11 +108,11 @@
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-activity"></i> Network Health</h5>
+                    <h5 class="card-title mb-0"><i class="bi bi-activity"></i> Network Health </h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <h6>Network Coverage</h6>
+                        <h6>Network Coverage <small class="text-muted">(over a 24 hour period)</small></h6>
                         <div class="progress mb-2">
                             {% set total_nodes_safe = stats.total_nodes if stats.total_nodes > 0 else 1 %}
                             {% set activity_percentage = (stats.active_nodes_24h / total_nodes_safe * 100)|int %}
@@ -125,14 +125,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <h6>Message Success Rate</h6>
+                        <h6>Infrastructure Diversity<h6>
                         <div class="progress mb-2">
-                            {% set success_bar_class = 'bg-success' if stats.success_rate >= 95 else 'bg-warning' if stats.success_rate >= 85 else 'bg-danger' %}
-                            <div class="progress-bar {{ success_bar_class }}" style="width: {{ stats.success_rate }}%;">
-                                {{ stats.success_rate }}%
+                            {% set total_infrastructure_nodes = (stats.total_infrastructure_nodes / 10 * 100)|int if stats.total_infrastructure_nodes <= 10 else 100 %}
+                            <div class="progress-bar bg-success" style="width: {{ total_infrastructure_nodes }}%;">
+                                {{ stats.total_infrastructure_nodes }}
                             </div>
                         </div>
-                        <small class="text-muted">Packet processing reliability</small>
+                        <small class="text-muted">Strategically placed nodes that help to support the network</small>
                     </div>
 
                     <div class="mb-3">
