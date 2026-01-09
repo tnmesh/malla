@@ -61,9 +61,8 @@ class DashboardRepository:
             )
             total_infrastructure_nodes = cursor.fetchone()["total_nodes"]
 
-
             # Single optimized query for all packet statistics
-            params = [one_hour_ago, twenty_four_hours_ago] + gateway_params
+            params = [one_hour_ago, one_hour_ago] + gateway_params
 
             cursor.execute(
                 f"""
@@ -108,11 +107,24 @@ class DashboardRepository:
 
             conn.close()
 
+            def convert_num_to_str_rep(num):
+                num = float('{:.3g}'.format(num))
+                magnitude = 0
+
+                while abs(num) >= 1000:
+                    magnitude += 1
+                    num /= 1000.0
+
+                suffix = ['', 'K', 'M', 'B', 'T']
+
+                return '{}{}'.format('{:g}'.format(num), suffix[magnitude])
+
             return {
                 "total_nodes": total_nodes,
                 "total_infrastructure_nodes": total_infrastructure_nodes,
                 "active_nodes_24h": stats_row["active_nodes_24h"] or 0,
                 "total_packets": total_packets_all_time or 0,
+                "total_packets_str": convert_num_to_str_rep(total_packets_all_time or 0),
                 "recent_packets": stats_row["recent_packets"] or 0,
                 "avg_rssi": round(stats_row["avg_rssi"] or 0, 1),
                 "avg_snr": round(stats_row["avg_snr"] or 0, 1),
