@@ -90,7 +90,7 @@
         <div class="col-md-8 mb-4">
             <div class="card h-100">
                 <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow"></i> Network Activity Trends (7 Days)</h5>
+                    <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow"></i> Network Activity Trends (24 Hours)</h5>
                 </div>
                 <div class="card-body">
                     <div id="timeSeriesChartLoading" class="text-center py-4">
@@ -550,9 +550,21 @@ function createTimeSeriesChart(temporalData) {
     const labels = [];
     const data = [];
 
+    let start = 24;
     temporalData.hourly_breakdown.forEach(item => {
-        labels.push(`${item.hour}:00`);
+        const remainder = start - item.hour;
+        if (remainder === 1) {
+            labels.push(`T-${remainder} hour`);
+        } else {
+            labels.push(`T-${remainder} hours`);
+        }
+
         data.push(item.total_packets);
+    });
+
+    const successfulPackets = [];
+    temporalData.hourly_breakdown.forEach(item => {
+        successfulPackets.push(item.successful_packets);
     });
 
     const colors = getChartColors();
@@ -563,7 +575,14 @@ function createTimeSeriesChart(temporalData) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Messages per Hour',
+                label: 'Successful Packets per Hour',
+                data: successfulPackets,
+                borderColor: colors.success,
+                backgroundColor: colors.successBg,
+                tension: 0.1
+            },
+            {
+                label: 'TotalPackets per Hour',
                 data: data,
                 borderColor: colors.info,
                 backgroundColor: colors.infoBg,
