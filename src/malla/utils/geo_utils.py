@@ -23,7 +23,7 @@ def get_tennessee_division(latitude: float, longitude: float) -> str:
 
     for _, row in divisions_gdf.iterrows():
         if row['geometry'].contains(point):
-            return row['Division']
+            return row['Region']
 
     return "Unknown"
 
