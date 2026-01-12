@@ -1538,6 +1538,7 @@ def api_packets_data():
                 "mesh_packet_id": packet.get("mesh_packet_id"),
                 "is_grouped": group_packets,
                 "channel": packet.get("channel_id") or "Unknown",
+                "success": packet.get("success") or None,
                 "text_content": text_content,
             }
 

@@ -474,6 +474,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     return `<span class="text-muted">-</span>`;
                 }
             },
+            {
+                key: 'success',
+                title: 'Status',
+                sortable: false,
+                render: (value, row) => {
+                    if (value !== null && value !== undefined && value !== 0 && typeof value === 'number') {
+                        return `<span class="badge bg-success">Success</span>`;
+                    }
+                    return `<span class="badge bg-danger">Failed</span>`;
+                }
+            },
           ],
 
         // Final columns that are always at the end
