@@ -550,14 +550,10 @@ function createTimeSeriesChart(temporalData) {
     const labels = [];
     const data = [];
 
-    let start = 24;
     temporalData.hourly_breakdown.forEach(item => {
-        const remainder = start - item.hour;
-        if (remainder === 1) {
-            labels.push(`T-${remainder} hour`);
-        } else {
-            labels.push(`T-${remainder} hours`);
-        }
+        const currentTime = Date.now() / 1000;
+        const difference = (24 - item.hour) * 100 * 60 * 60;
+        labels.push(formatTimestamp(currentTime - difference, 'time'))
 
         data.push(item.total_packets);
     });
@@ -582,7 +578,7 @@ function createTimeSeriesChart(temporalData) {
                 tension: 0.1
             },
             {
-                label: 'TotalPackets per Hour',
+                label: 'Total Packets per Hour',
                 data: data,
                 borderColor: colors.info,
                 backgroundColor: colors.infoBg,
