@@ -3275,7 +3275,9 @@ class LocationRepository:
             cursor = conn.cursor()
 
             node_ids_filter = filters.get("node_ids") if filters else None
+            region_filter = filters.get("region") if filters else None
             node_ids_clause = ""
+            region_clause = ""
             node_ids_params: list[Any] = []
             if node_ids_filter:
                 # Ensure all IDs are ints
@@ -3300,6 +3302,10 @@ class LocationRepository:
                     placeholders = ",".join(["?"] * len(node_ids_int))
                     node_ids_clause = f"AND from_node_id IN ({placeholders})"
                     node_ids_params = node_ids_int
+
+            if region_filter:
+                region_clause = f"AND ni.region = ?"
+                node_ids_params.append(region_filter)
 
             # Optimized query using window function instead of correlated subquery
             query = f"""
@@ -3331,6 +3337,7 @@ class LocationRepository:
                     AND ph.timestamp = mt.max_timestamp
                 LEFT JOIN node_info ni ON ph.from_node_id = ni.node_id
                 WHERE ph.portnum = 3
+                {region_clause}
                 AND ph.raw_payload IS NOT NULL
                 ORDER BY ph.timestamp DESC
             """

@@ -644,6 +644,9 @@ def api_locations():
         if request.args.get("search"):
             filters["search"] = request.args.get("search")
 
+        if request.args.get("region"):
+            filters["region"] = request.args.get("region")
+
         # Get enhanced location data with network topology
         locations = LocationService.get_node_locations(filters)
 
