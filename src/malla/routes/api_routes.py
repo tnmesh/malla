@@ -46,6 +46,25 @@ logger = logging.getLogger(__name__)
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 CORS(api_bp, origins=CORS_ALLOWED_DOMAINS)
 
+@api_bp.route("/brand")
+def brand():
+    logger.info("API stats endpoint accessed")
+
+    brands = {
+        "malla.nashme.sh": "NashMe.sh Network",
+        "malla.tnmesh.org": "Tennessee Meshtastic Network",
+        "malla.staging.tnmesh.org": "Testing"
+    };
+
+    forwarded_host = request.headers.get("X-Forwarded-Host")
+    try:
+        return safe_jsonify({
+            "name": brands[forwarded_host] or 'Malla'
+        })
+    except Exception as e:
+        logger.error(f"Error in API stats: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @api_bp.route("/stats")
 def api_stats():
     """API endpoint for dashboard statistics."""

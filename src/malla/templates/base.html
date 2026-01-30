@@ -113,7 +113,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="z-index: 1040;">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
-                <i class="bi bi-radio"></i> {{ APP_NAME }}
+                <i class="bi bi-radio"></i> <div id="brand-name"></div>
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -250,6 +250,12 @@
         // Cache for node information to avoid repeated API calls
         const nodeInfoCache = new Map();
 
+        function initializeBrand() {
+            const nodeInfo = fetchBrandInfo().then((brand) => {
+                    const brandName = document.querySelector('#brand-name');
+                    brandName.textContent = brand['name'];
+            });
+        }
         // Initialize node tooltips
         function initializeNodeTooltips() {
             // Initialize all node-link elements with tooltips
@@ -289,6 +295,16 @@
                     }
                 });
             });
+        }
+
+        async function fetchBrandInfo() {
+            const response = await fetch(`/api/brand`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+
+            return data;
         }
 
         // Fetch node information from cache first, fall back to API if necessary
@@ -389,6 +405,7 @@
         // Initialize tooltips when page loads
         document.addEventListener('DOMContentLoaded', function() {
             initializeNodeTooltips();
+            initializeBrand();
 
             // Initialize theme toggle tooltip
             const themeToggle = document.getElementById('theme-toggle');
